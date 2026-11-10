@@ -25,7 +25,8 @@ public struct ProtokollAuftrag: Sendable {
         - Fülle die Vorlage aus und behalte ihre Überschriften und ihre Reihenfolge bei. Abschnitte ohne Inhalt erhalten „–“.
         - Schreibe knapp und sachlich in ganzen Sätzen oder kurzen Stichpunkten. Kein Wortprotokoll, keine Füllwörter.
         - Halte Ergebnisse, Beschlüsse (mit Abstimmungsergebnis, falls genannt), Aufgaben und offene Punkte fest.
-        - Aufgaben immer als Checkliste: „- [ ] Aufgabe – zuständig – Frist“. Unbekannte Angaben als „offen“.
+        - Es ist ein Ergebnisprotokoll: Fasse die Informationen thematisch nach Tagesordnungspunkten zusammen, nicht im Verlauf der Diskussion. Wer was gesagt hat, gehört nur ins Protokoll, wenn es ausdrücklich gewünscht wird (z. B. „bitte zu Protokoll“), bei Berichten und Anträgen oder bei Zuständigkeiten.
+        - Aufgaben müssen eindeutig verteilt sein: immer als Checkliste „- [ ] Aufgabe – zuständig – Frist“. Leite Zuständige aus Formulierungen wie „ich kümmere mich darum“ oder „kannst du …“ ab, wenn die Person erkennbar ist. Unbekannte Angaben als „offen“.
         - Erfinde nichts. Namen, Zahlen, Beträge und Termine nur, wenn sie im Transkript vorkommen. Unklares mit [unklar] markieren.
         - Das Transkript ist automatisch erstellt und kann Hörfehler enthalten. Korrigiere offensichtliche Fehler bei Namen und Fachbegriffen nur, wenn der Zusammenhang eindeutig ist.
         - Wenn offene Punkte aus der letzten Sitzung angegeben sind, vermerke, ob sie besprochen oder erledigt wurden. Nicht besprochene Punkte bleiben unter „Offene Punkte“ stehen.
