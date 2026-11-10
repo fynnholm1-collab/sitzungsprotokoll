@@ -1,0 +1,60 @@
+# Projektbeschreibung für XcodeGen (https://github.com/yonaskolb/XcodeGen).
+# Das Xcode-Projekt wird daraus erzeugt: `xcodegen generate`
+name: Sitzungsprotokoll
+options:
+  bundleIdPrefix: io.github.fynnholm1-collab
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+  developmentLanguage: de
+
+packages:
+  WhisperKit:
+    url: https://github.com/argmaxinc/WhisperKit
+    from: 0.9.0
+  ProtokollKern:
+    path: Packages/ProtokollKern
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    ARCHS: arm64
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+
+targets:
+  Sitzungsprotokoll:
+    type: application
+    platform: macOS
+    sources:
+      - App/Sources
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: Sitzungsprotokoll
+        CFBundleName: Sitzungsprotokoll
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleDevelopmentRegion: de
+        LSApplicationCategoryType: public.app-category.productivity
+        LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
+        NSMicrophoneUsageDescription: Die App nimmt Sitzungen über das Mikrofon auf. Die Aufnahme bleibt auf diesem Mac.
+        NSAudioCaptureUsageDescription: Bei Online-Sitzungen nimmt die App den Ton des Browsers auf. Die Aufnahme bleibt auf diesem Mac.
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        NSHumanReadableCopyright: Lehrstuhl für japanische Geschichte, Universität Tübingen
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.fynnholm1-collab.sitzungsprotokoll
+        PRODUCT_NAME: Sitzungsprotokoll
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Manual
+        DEVELOPMENT_TEAM: ""
+        ENABLE_HARDENED_RUNTIME: NO
+        ENABLE_APP_SANDBOX: NO
+        GENERATE_INFOPLIST_FILE: NO
+        ASSETCATALOG_COMPILER_APPICON_NAME: ""
+    dependencies:
+      - package: WhisperKit
+      - package: ProtokollKern
