@@ -9,8 +9,11 @@ public struct ProtokollAuftrag: Sendable {
     public var transkript: String
     public var sprache: String
     public var reihe: String
+    /// Richtige Schreibweisen von Namen und Fachbegriffen (Wörterbuch aus den Einstellungen).
+    public var woerterbuch: [String]
 
-    public init(vorlage: String, offenePunkte: [String], transkript: String, sprache: String = "Deutsch", reihe: String) {
+    public init(vorlage: String, offenePunkte: [String], transkript: String, sprache: String = "Deutsch", reihe: String, woerterbuch: [String] = []) {
+        self.woerterbuch = woerterbuch
         self.vorlage = vorlage
         self.offenePunkte = offenePunkte
         self.transkript = transkript
@@ -32,7 +35,14 @@ public struct ProtokollAuftrag: Sendable {
         - Wenn offene Punkte aus der letzten Sitzung angegeben sind, vermerke, ob sie besprochen oder erledigt wurden. Nicht besprochene Punkte bleiben unter „Offene Punkte“ stehen.
         - Schreibe das Protokoll auf \(sprache).
         - Gib nur das fertige Protokoll in Markdown aus, ohne Vorbemerkung und ohne Codeblock.
-        """
+        """ + schreibweisenText
+    }
+
+    /// Abschnitt mit den Schreibweisen aus dem Wörterbuch (leer, wenn es keine gibt).
+    var schreibweisenText: String {
+        guard !woerterbuch.isEmpty else { return "" }
+        return "\n\nSchreibweisen von Namen und Begriffen (verwende genau diese Schreibweise, wenn im Transkript ein ähnlich klingendes Wort steht, das erkennbar gemeint ist):\n"
+            + woerterbuch.map { "- \($0)" }.joined(separator: "\n")
     }
 
     private var offenePunkteText: String {
@@ -98,7 +108,7 @@ public struct ProtokollAuftrag: Sendable {
         Du fasst Abschnitt \(nummer) von \(anzahl) eines Sitzungstranskripts (\(reihe)) in Stichpunkten zusammen.
         Halte alle Themen, Ergebnisse, Beschlüsse mit Abstimmungsergebnis, Aufgaben (wer, was, bis wann), Zahlen, Termine und offenen Fragen fest.
         Erfinde nichts. Schreibe auf \(sprache). Gib nur die Stichpunkte aus.
-        """
+        """ + schreibweisenText
         let nutzer = """
         ## Transkript, Abschnitt \(nummer) von \(anzahl)
         \(abschnitt)

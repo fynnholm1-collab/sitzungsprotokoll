@@ -98,6 +98,18 @@ private struct KITab: View {
                     .font(.caption).foregroundStyle(.secondary)
                 Button("Modellordner im Finder zeigen") { NSWorkspace.shared.open(Ablage.modelle) }
             }
+            Section("Wörterbuch: Namen und Fachbegriffe") {
+                TextEditor(text: $model.einstellungen.woerterbuch)
+                    .font(.body.monospaced())
+                    .frame(minHeight: 160)
+                Text("Ein Eintrag pro Zeile. Das Protokoll bekommt die ganze Liste als Vorgabe für die Schreibweise. Die Spracherkennung nutzt das Wörterbuch nur mit dem Modell „large-v3“ (genauer bei Namen, aber etwa 3–4-mal langsamer als das empfohlene Modell) und dann nur die ersten 8–10 Einträge; wichtige Namen also nach oben.")
+                    .font(.caption).foregroundStyle(.secondary)
+                HStack {
+                    Text("\(model.einstellungen.woerterbuchEintraege.count) Einträge").font(.caption).foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Vorbelegung wiederherstellen") { model.einstellungen.woerterbuch = Woerterbuch.standardText }
+                }
+            }
             Section("Lokale Zusammenfassung (Ollama)") {
                 TextField("Adresse", text: $model.einstellungen.ollamaAdresse)
                 if !model.einstellungen.ollamaIstLokal {

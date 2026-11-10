@@ -106,6 +106,10 @@ struct Einstellungen: Codable, Equatable {
     var tonquelle: String = ""
     var echoFilter: Bool = true
     var einwilligungsText: String = Einstellungen.standardEinwilligung
+    /// Namen und Fachbegriffe, eine Zeile pro Eintrag (für Spracherkennung und Protokoll).
+    var woerterbuch: String = Woerterbuch.standardText
+
+    var woerterbuchEintraege: [String] { Woerterbuch.eintraege(woerterbuch) }
 
     static let standardEinwilligung = """
     Hinweis: Diese Sitzung wird zur Erstellung des Protokolls aufgezeichnet. Aufnahme und Transkript werden ausschließlich lokal auf meinem Rechner verarbeitet und nach Fertigstellung des Protokolls gelöscht. Wenn Sie nicht einverstanden sind, sagen Sie es bitte jetzt; dann wird nicht aufgezeichnet.
@@ -115,7 +119,7 @@ struct Einstellungen: Codable, Equatable {
 
     enum CodingKeys: String, CodingKey {
         case eigenerName, nextcloudOrdner, formatWord, formatMarkdown, aufnahmeLoeschen, whisperModell
-        case ollamaAdresse, ollamaModell, ollamaKontext, askAlmaAdresse, tonquelle, echoFilter, einwilligungsText
+        case ollamaAdresse, ollamaModell, ollamaKontext, askAlmaAdresse, tonquelle, echoFilter, einwilligungsText, woerterbuch
     }
 
     init(from decoder: Decoder) throws {
@@ -134,6 +138,7 @@ struct Einstellungen: Codable, Equatable {
         tonquelle = try c.decodeIfPresent(String.self, forKey: .tonquelle) ?? s.tonquelle
         echoFilter = try c.decodeIfPresent(Bool.self, forKey: .echoFilter) ?? s.echoFilter
         einwilligungsText = try c.decodeIfPresent(String.self, forKey: .einwilligungsText) ?? s.einwilligungsText
+        woerterbuch = try c.decodeIfPresent(String.self, forKey: .woerterbuch) ?? s.woerterbuch
     }
 
     var nextcloudURL: URL? {

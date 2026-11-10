@@ -208,3 +208,42 @@ final class TranskriptTests: XCTestCase {
         XCTAssertEqual(Transkript.text(segmente), "[0:00:00] A: Eins. Zwei.\n[0:00:05] B: Drei.\n[1:01:40] Vier.")
     }
 }
+
+final class WoerterbuchTests: XCTestCase {
+    func testEintraegeAusText() {
+        let e = Woerterbuch.eintraege("Fynn Holm\n\n  Japanologie \nfynn holm\nAOI\n")
+        XCTAssertEqual(e, ["Fynn Holm", "Japanologie", "AOI"])
+        XCTAssertTrue(Woerterbuch.standard.contains("Fynn Holm"))
+        XCTAssertEqual(Woerterbuch.eintraege(Woerterbuch.standardText), Woerterbuch.standard)
+    }
+
+    func testWhisperPromptHaeltBudgetUndEndetOhnePunkt() {
+        let p = Woerterbuch.whisperPrompt(["Fynn Holm", "Japanologie", "AOI"]) { $0.count <= 25 }
+        XCTAssertEqual(p, " Fynn Holm, Japanologie")
+        XCTAssertFalse(p.hasSuffix("."))
+        XCTAssertEqual(Woerterbuch.whisperPrompt(["Sehr langer Eintrag"]) { _ in false }, "")
+    }
+
+    func testPromptEchoWirdErkannt() {
+        let w = ["Fynn Holm", "Japanologie", "Asien-Orient-Institut (AOI)"]
+        XCTAssertTrue(Woerterbuch.istPromptEcho(" Holm, Japanologie, AOI", eintraege: w))
+        XCTAssertTrue(Transkript.istHalluzination("Untertitelung des ZDF, 2020"))
+        XCTAssertFalse(Woerterbuch.istPromptEcho("Fynn Holm leitet die Sitzung.", eintraege: w))
+        XCTAssertFalse(Woerterbuch.istPromptEcho("Japanologie", eintraege: w))
+        let spur = Spur(sprecher: nil, versatz: 0, segmente: [
+            Segment(start: 0, ende: 2, text: "Das wäre um 15 Uhr."),
+            Segment(start: 2, ende: 3, text: " Holm, Japanologie, AOI"),
+        ])
+        XCTAssertEqual(Transkript.zusammenfuehren([spur], woerterbuch: w).map(\.text), ["Das wäre um 15 Uhr."])
+    }
+
+    func testAuftragEnthaeltSchreibweisen() {
+        let a = ProtokollAuftrag(vorlage: "# Protokoll", offenePunkte: [], transkript: "Finn sagt …", reihe: "Dienstbesprechung", woerterbuch: ["Fynn Holm", "Japanologie"])
+        XCTAssertTrue(a.systemText.contains("Schreibweisen von Namen und Begriffen"))
+        XCTAssertTrue(a.systemText.contains("- Fynn Holm"))
+        XCTAssertTrue(a.teilauftrag(abschnitt: "x", nummer: 1, von: 2).system.contains("- Japanologie"))
+        XCTAssertTrue(a.zusammenfuehrung(notizen: ["n"]).system.contains("- Fynn Holm"))
+        let ohne = ProtokollAuftrag(vorlage: "# Protokoll", offenePunkte: [], transkript: "", reihe: "X")
+        XCTAssertFalse(ohne.systemText.contains("Schreibweisen"))
+    }
+}

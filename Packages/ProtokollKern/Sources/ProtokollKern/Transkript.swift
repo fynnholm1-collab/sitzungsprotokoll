@@ -34,6 +34,8 @@ public enum Transkript {
     static let halluzinationen = [
         "untertitel im auftrag des zdf",
         "untertitelung im auftrag des zdf",
+        "untertitelung des zdf",
+        "untertitel des zdf",
         "untertitel der amara.org-community",
         "untertitel von stephanie geiges",
         "vielen dank fürs zuschauen",
@@ -70,11 +72,12 @@ public enum Transkript {
     /// Führt mehrere Spuren zeitlich zusammen, bereinigt sie und entfernt bei
     /// Online-Sitzungen das Echo: Wenn das Mikrofon (Spur `echoSpur`) den
     /// Lautsprecherton mit aufnimmt, werden diese doppelten Stellen verworfen.
-    public static func zusammenfuehren(_ spuren: [Spur], echoSpur: Int? = nil) -> [Segment] {
+    /// Segmente, in denen Whisper nur das Wörterbuch (den Prompt) wiederholt, entfallen.
+    public static func zusammenfuehren(_ spuren: [Spur], echoSpur: Int? = nil, woerterbuch: [String] = []) -> [Segment] {
         var proSpur: [[Segment]] = spuren.map { spur in
             spur.segmente.compactMap { s in
                 let text = bereinigt(s.text)
-                guard !istHalluzination(text) else { return nil }
+                guard !istHalluzination(text), !Woerterbuch.istPromptEcho(text, eintraege: woerterbuch) else { return nil }
                 return Segment(start: s.start + spur.versatz, ende: s.ende + spur.versatz, text: text, sprecher: spur.sprecher ?? s.sprecher)
             }
         }

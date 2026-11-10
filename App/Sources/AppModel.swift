@@ -26,6 +26,16 @@ final class AppModel: ObservableObject {
         einstellungen = (try? Ablage.decoder.decode(Einstellungen.self, from: Data(contentsOf: Ablage.einstellungen))) ?? Einstellungen()
         reihen = (try? Ablage.decoder.decode([Sitzungsreihe].self, from: Data(contentsOf: Ablage.reihen))) ?? Sitzungsreihe.standard
         ladeSitzungen()
+        spracherkennungVorbereiten()
+    }
+
+    /// Lädt die Spracherkennung im Hintergrund, wenn das Modell schon heruntergeladen ist,
+    /// damit die nächste Transkription ohne Wartezeit beginnt.
+    func spracherkennungVorbereiten() {
+        guard TranskriptionsDienst.modellVorhanden else { return }
+        let modell = einstellungen.whisperModell
+        let dienst = transkription
+        Task(priority: .utility) { await dienst.vorbereiten(modell: modell) }
     }
 
     // MARK: Speichern und Laden
@@ -163,24 +173,41 @@ final class AppModel: ObservableObject {
     func transkribiere(_ id: UUID) async {
         guard let s = sitzung(id), taetigkeit[id] == nil else { return }
         let modell = einstellungen.whisperModell
+        let woerterbuch = einstellungen.woerterbuchEintraege
         let zweiSpuren = s.mikrofonDatei != nil && s.systemDatei != nil
-        taetigkeit[id] = "Spracherkennung wird geladen … (beim ersten Mal wird das Modell heruntergeladen, ca. 1–2 GB)"
+        taetigkeit[id] = "Spracherkennung wird vorbereitet …"
+        if !(await transkription.istBereit) {
+            taetigkeit[id] = "Spracherkennung wird geladen … Beim ersten Mal wird das Modell heruntergeladen (ca. 1,5 GB) und für diesen Mac optimiert; das kann 5–10 Minuten dauern."
+        }
         defer { taetigkeit[id] = nil }
+
+        /// Zeigt „Abschnitt x von y“ an, solange die Transkription läuft.
+        func fortschritt(_ titel: String) -> TranskriptionsDienst.Fortschritt {
+            { [weak self] fertig, gesamt in
+                Task { @MainActor in
+                    guard let self, self.taetigkeit[id] != nil else { return }
+                    self.taetigkeit[id] = "\(titel) (Abschnitt \(min(fertig + 1, gesamt)) von \(gesamt))"
+                }
+            }
+        }
+
         do {
             var spuren: [Spur] = []
             if let url = audioURL(s, s.mikrofonDatei) {
-                taetigkeit[id] = zweiSpuren ? "Eigene Spur (Mikrofon) wird abgeschrieben …" : "Aufnahme wird abgeschrieben …"
-                let segmente = try await transkription.transkribiere(datei: url, sprache: s.sprache, modell: modell)
+                let titel = zweiSpuren ? "Eigene Spur (Mikrofon) wird abgeschrieben …" : "Aufnahme wird abgeschrieben …"
+                let segmente = try await transkription.transkribiere(
+                    datei: url, sprache: s.sprache, modell: modell, woerterbuch: woerterbuch, fortschritt: fortschritt(titel))
                 let name = einstellungen.eigenerName.isEmpty ? "Ich" : einstellungen.eigenerName
                 spuren.append(Spur(sprecher: zweiSpuren ? name : nil, versatz: s.versatzMikrofon, segmente: segmente))
             }
             if let url = audioURL(s, s.systemDatei) {
-                taetigkeit[id] = "Online-Teilnehmende (Browser-Ton) werden abgeschrieben …"
-                let segmente = try await transkription.transkribiere(datei: url, sprache: s.sprache, modell: modell)
+                let titel = "Online-Teilnehmende (Browser-Ton) werden abgeschrieben …"
+                let segmente = try await transkription.transkribiere(
+                    datei: url, sprache: s.sprache, modell: modell, woerterbuch: woerterbuch, fortschritt: fortschritt(titel))
                 spuren.append(Spur(sprecher: zweiSpuren ? "Online-Teilnehmende" : nil, versatz: s.versatzSystem, segmente: segmente))
             }
             let echo: Int? = (zweiSpuren && einstellungen.echoFilter) ? 0 : nil
-            let text = Transkript.text(Transkript.zusammenfuehren(spuren, echoSpur: echo))
+            let text = Transkript.text(Transkript.zusammenfuehren(spuren, echoSpur: echo, woerterbuch: woerterbuch))
             aendere(id) {
                 $0.transkript = text
                 if $0.status == .aufgenommen || $0.status == .neu { $0.status = .transkribiert }
@@ -308,7 +335,8 @@ final class AppModel: ObservableObject {
             offenePunkte: offenePunkte,
             transkript: s.transkript ?? "",
             sprache: reihe?.protokollsprache ?? "Deutsch",
-            reihe: reihe?.name ?? s.titel)
+            reihe: reihe?.name ?? s.titel,
+            woerterbuch: einstellungen.woerterbuchEintraege)
     }
 
     /// Erstellt den Protokollentwurf mit dem lokalen Sprachmodell (Ollama).
