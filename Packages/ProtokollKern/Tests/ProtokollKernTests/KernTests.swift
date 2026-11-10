@@ -84,6 +84,7 @@ final class DateinamenTests: XCTestCase {
     func testZielordner() {
         XCTAssertEqual(Sitzungsreihe(name: "AG EU Campus").zielordner, "AG EU Campus")
         XCTAssertEqual(Sitzungsreihe(name: "X", ordner: "/Gremien/GF/").zielordner, "Gremien/GF")
+        XCTAssertEqual(Sitzungsreihe(name: "AG Öffentlichkeit", ordner: " . ").zielordner, "")
     }
 }
 

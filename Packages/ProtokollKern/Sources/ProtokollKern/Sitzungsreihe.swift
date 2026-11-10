@@ -30,11 +30,17 @@ public struct Sitzungsreihe: Codable, Identifiable, Hashable, Sendable {
         self.protokollsprache = protokollsprache
     }
 
-    /// Relativer Pfad des Zielordners im Nextcloud-Protokollordner.
+    /// Kennzeichen für „direkt im Nextcloud-Protokollordner, ohne Unterordner“.
+    public static let hauptordner = "."
+
+    /// Relativer Pfad des Zielordners im Nextcloud-Protokollordner. Leer bedeutet:
+    /// direkt im Protokollordner (Einstellung „.“). Ohne Angabe wird ein Unterordner
+    /// mit dem Namen der Reihe verwendet.
     public var zielordner: String {
         let bereinigt = ordner
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        if bereinigt == Self.hauptordner { return "" }
         return bereinigt.isEmpty ? Dateinamen.bereinigt(name) : bereinigt
     }
 

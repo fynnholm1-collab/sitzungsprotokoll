@@ -359,7 +359,11 @@ struct SitzungView: View {
                         }
                     }
                 }
-                Text("Erst mit diesem Klick wird das Protokoll in den Nextcloud-Ordner gelegt. Aufnahme und Transkript gehen nie in die Nextcloud.")
+                if let ordner = freigabeErgebnis.first?.deletingLastPathComponent() {
+                    Label("Abgelegt im Ordner „\(ordner.lastPathComponent)“: \(ordner.path)", systemImage: "checkmark.circle.fill")
+                        .font(.callout).foregroundStyle(.green).textSelection(.enabled)
+                }
+                Text("Erst mit diesem Klick wird das Protokoll in den Nextcloud-Ordner gelegt (im Unterordner der Sitzungsreihe; einstellbar unter Einstellungen → Sitzungsreihen). Aufnahme und Transkript gehen nie in die Nextcloud.")
                     .font(.caption).foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)

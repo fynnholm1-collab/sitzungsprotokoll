@@ -250,14 +250,14 @@ private struct ReiheEditor: View {
                     TextField("", text: $reihe.ordner, prompt: Text(Dateinamen.bereinigt(reihe.name)))
                     Button("Wählen …") {
                         guard let wurzel = model.einstellungen.nextcloudURL else { return }
-                        if let url = waehleOrdner(start: wurzel.appendingPathComponent(reihe.zielordner),
+                        if let url = waehleOrdner(start: reihe.zielordner.isEmpty ? wurzel : wurzel.appendingPathComponent(reihe.zielordner),
                                                   titel: "Wähle den bestehenden Nextcloud-Ordner für „\(reihe.name)“.") {
                             let w = wurzel.resolvingSymlinksInPath().path
                             let p = url.resolvingSymlinksInPath().path
                             if p.hasPrefix(w + "/") {
                                 reihe.ordner = String(p.dropFirst(w.count + 1))
                             } else if p == w {
-                                reihe.ordner = ""
+                                reihe.ordner = Sitzungsreihe.hauptordner
                             } else {
                                 model.fehlermeldung = "Der Ordner muss innerhalb des Nextcloud-Protokollordners liegen."
                             }
@@ -266,6 +266,10 @@ private struct ReiheEditor: View {
                     .disabled(model.einstellungen.nextcloudURL == nil)
                 }
             }
+            Text(reihe.zielordner.isEmpty
+                 ? "Protokolle dieser Reihe werden direkt im Nextcloud-Protokollordner abgelegt."
+                 : "Protokolle dieser Reihe werden im Unterordner „\(reihe.zielordner)“ des Nextcloud-Protokollordners abgelegt. Für den Protokollordner selbst „.“ eintragen oder ihn über „Wählen …“ auswählen.")
+                .font(.caption).foregroundStyle(.secondary)
             Toggle("Findet meist online statt", isOn: $reihe.meistOnline)
             Picker("Protokollsprache", selection: $reihe.protokollsprache) {
                 ForEach(Einstellungen.protokollsprachen, id: \.self) { Text($0).tag($0) }

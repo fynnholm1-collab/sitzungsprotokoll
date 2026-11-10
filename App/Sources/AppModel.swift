@@ -416,7 +416,9 @@ final class AppModel: ObservableObject {
     }
 
     func zielordner(fuer reihe: Sitzungsreihe) -> URL? {
-        einstellungen.nextcloudURL?.appendingPathComponent(reihe.zielordner, isDirectory: true)
+        guard let wurzel = einstellungen.nextcloudURL else { return nil }
+        let unterordner = reihe.zielordner
+        return unterordner.isEmpty ? wurzel : wurzel.appendingPathComponent(unterordner, isDirectory: true)
     }
 
     /// Geplante Zieldateien der Freigabe.
