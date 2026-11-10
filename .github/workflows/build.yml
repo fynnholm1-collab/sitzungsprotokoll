@@ -17,7 +17,7 @@ concurrency:
 jobs:
   kern-tests:
     name: Tests der Kernlogik
-    runs-on: macos-15
+    runs-on: macos-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -27,7 +27,7 @@ jobs:
   app:
     name: App bauen (.dmg)
     needs: kern-tests
-    runs-on: macos-15
+    runs-on: macos-latest
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
