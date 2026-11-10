@@ -1,0 +1,82 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  kern-tests:
+    name: Tests der Kernlogik
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Swift-Tests
+        run: swift test --package-path Packages/ProtokollKern
+
+  app:
+    name: App bauen (.dmg)
+    needs: kern-tests
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Xcode-Version
+        run: xcodebuild -version
+      - name: XcodeGen installieren
+        run: brew install xcodegen
+      - name: Xcode-Projekt erzeugen
+        run: xcodegen generate
+      - name: Abhängigkeiten auflösen (Cache)
+        uses: actions/cache@v4
+        with:
+          path: build/SourcePackages
+          key: spm-${{ hashFiles('project.yml') }}
+      - name: App bauen
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project Sitzungsprotokoll.xcodeproj \
+            -scheme Sitzungsprotokoll \
+            -configuration Release \
+            -destination 'platform=macOS,arch=arm64' \
+            -derivedDataPath build \
+            -skipPackagePluginValidation \
+            -skipMacroValidation \
+            CODE_SIGN_IDENTITY=- \
+            build | tee build.log | grep -E "error:|warning: .*(Sitzungsprotokoll|ProtokollKern)|BUILD" || true
+          test -d build/Build/Products/Release/Sitzungsprotokoll.app
+      - name: Ad-hoc signieren und .dmg erstellen
+        run: |
+          APP=build/Build/Products/Release/Sitzungsprotokoll.app
+          codesign --force --deep --sign - "$APP"
+          codesign --verify --verbose "$APP"
+          mkdir -p dmg
+          cp -R "$APP" dmg/
+          ln -s /Applications dmg/Programme
+          hdiutil create -volname Sitzungsprotokoll -srcfolder dmg -ov -format UDZO Sitzungsprotokoll.dmg
+      - name: .dmg hochladen
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sitzungsprotokoll-dmg
+          path: Sitzungsprotokoll.dmg
+          retention-days: 30
+      - name: Build-Protokoll bei Fehlern
+        if: failure()
+        run: grep -E "error:" -A3 build.log | head -100 || true
+      - name: Release veröffentlichen
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Sitzungsprotokoll.dmg
+          generate_release_notes: true
